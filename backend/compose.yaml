@@ -1,0 +1,47 @@
+version: '3'
+services:
+  postgres:
+    image: postgres
+    volumes:
+      - ./data:/var/lib/postgresql/data
+      - ./sqldump:/sqldump
+    environment:
+      POSTGRES_USER: directus
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: directus
+    ports:
+      - 5432:5432
+    healthcheck:
+      test:
+        ['CMD-SHELL', 'pg_isready -U directus']
+      interval: 5s
+      timeout: 2s
+      retries: 10
+
+  directus:
+    depends_on:
+      postgres:
+        condition: service_healthy
+    image: directus/directus:10.10.4
+    ports:
+      - 8055:8055
+    volumes:
+      - ./snapshot:/directus/snapshots
+      - ./uploads:/directus/uploads
+      - ./extensions:/directus/extensions
+    environment:
+      KEY: 255d861b-5ea1-5996-9aa3-922530ec40b1
+      SECRET: 6116487b-cda1-52c2-b5b5-c8022c45e263
+
+      CORS_ENABLED: true
+      WEBSOCKETS_ENABLED: true
+
+      DB_CLIENT: pg
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_DATABASE: directus
+      DB_USER: directus
+      DB_PASSWORD: password
+
+      ADMIN_EMAIL: admin@example.com
+      ADMIN_PASSWORD: password
